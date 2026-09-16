@@ -2,7 +2,7 @@
   "name": "savage-tech",
   "version": "1.6.1",
   "description": "WhatsApp Bot by Spencer",
-  "main": "server.js",
+  "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js"
@@ -25,5 +25,8 @@
     "yt-search": "^2.13.1",
     "ytdl-core": "^4.11.5",
     "ytmusic-advanced": "^1.0.0"
+  },
+  "devDependencies": {
+    "javascript-obfuscator": "^5.4.2"
   }
 }
