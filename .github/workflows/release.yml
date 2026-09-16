@@ -1,0 +1,73 @@
+name: Create Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger from the Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x' # Using current Active LTS
+          cache: 'npm'
+
+      - name: Read version from package.json
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if release already exists
+        id: check_release
+        run: |
+          if gh release view ${{ steps.version.outputs.TAG }} > /dev/null 2>&1; then
+            echo "RELEASE_EXISTS=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ steps.version.outputs.TAG }} already exists. Skipping."
+          else
+            echo "RELEASE_EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify runtime files exist
+        if: steps.check_release.outputs.RELEASE_EXISTS == 'false'
+        run: |
+          for file in bot-merged.js package.json settings.js; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Error: Required file '$file' is missing!"
+              exit 1
+            fi
+          done
+          echo "✅ All runtime files are present."
+
+      - name: Create release zip
+        if: steps.check_release.outputs.RELEASE_EXISTS == 'false'
+        run: |
+          # Zip only the runtime files needed for deployment
+          # Including server.js and index.js as they are likely entry points
+          zip -r release.zip bot-merged.js package.json settings.js server.js index.js
+          echo "📦 Release zip created:"
+          ls -lh release.zip
+
+      - name: Create GitHub Release
+        if: steps.check_release.outputs.RELEASE_EXISTS == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: ${{ steps.version.outputs.TAG }}
+          files: release.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
