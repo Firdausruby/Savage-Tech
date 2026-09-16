@@ -59,7 +59,7 @@ async function getPairingSocket() {
     }
     if (temporarySock) return temporarySock;
     console.log("Creating temporary socket for pairing");
-    const { state, saveCreds } = await useMultiFileAuthState('./session');
+    const { state, saveCreds } = await useMultiFileAuthState('./session_pairing');
     const { version } = await fetchLatestBaileysVersion();
     const sock = makeWASocket({
         version,
@@ -824,7 +824,7 @@ wss.on('connection', (ws) => {
             }
             try {
                 const credsJson = Buffer.from(sessionB64, 'base64').toString('utf-8');
-                const sessionDir = path.join(__dirname, 'session');
+                const sessionDir = path.join(__dirname, 'session_pairing');
                 if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir);
                 fs.writeFileSync(path.join(sessionDir, 'creds.json'), credsJson);
                 ws.send(JSON.stringify({ type: 'log', message: 'Session saved. Restarting bot...', level: 'success' }));
