@@ -25,8 +25,5 @@
     "yt-search": "^2.13.1",
     "ytdl-core": "^4.11.5",
     "ytmusic-advanced": "^1.0.0"
-  },
-  "devDependencies": {
-    "javascript-obfuscator": "^5.4.2"
   }
 }
