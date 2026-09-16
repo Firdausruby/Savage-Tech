@@ -1,4 +1,4 @@
-name: Create Release
+name: Auto Release
 
 on:
   push:
@@ -23,36 +23,25 @@ jobs:
           node-version: '24.x'
           cache: 'npm'
 
-      - name: Read version from package.json
-        id: version
+      - name: Generate Unique Tag
+        id: tag
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "TAG=v$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Check if release already exists
-        id: check_release
-        run: |
-          if gh release view ${{ steps.version.outputs.TAG }} > /dev/null 2>&1; then
-            echo "RELEASE_EXISTS=true" >> $GITHUB_OUTPUT
-            echo "Release ${{ steps.version.outputs.TAG }} already exists. Skipping."
-          else
-            echo "RELEASE_EXISTS=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          TAG="v${VERSION}-${TIMESTAMP}-${SHORT_SHA}"
+          echo "TAG=${TAG}" >> $GITHUB_OUTPUT
+          echo "Generated Tag: ${TAG}"
 
       - name: Create release zip
-        if: steps.check_release.outputs.RELEASE_EXISTS == 'false'
         run: |
-          # Zipping the runtime files. Notice bot.js instead of bot-merged.js
           zip -r release.zip bot.js package.json settings.js server.js index.js
 
       - name: Create GitHub Release
-        if: steps.check_release.outputs.RELEASE_EXISTS == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.TAG }}
-          name: ${{ steps.version.outputs.TAG }}
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          name: ${{ steps.tag.outputs.TAG }}
           files: release.zip
           generate_release_notes: true
           draft: false
