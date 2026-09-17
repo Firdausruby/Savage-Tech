@@ -33,6 +33,18 @@ jobs:
           echo "TAG=${TAG}" >> $GITHUB_OUTPUT
           echo "Generated Tag: ${TAG}"
 
+      # ⭐ NEW: Stamp the tag into package.json before zipping
+      - name: Stamp package.json with tag
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            pkg.version = '${{ steps.tag.outputs.TAG }}'.replace(/^v/, '');
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+          echo "Stamped version:"
+          node -p "require('./package.json').version"
+
       - name: Create release zip
         run: |
           zip -r release.zip bot.js package.json settings.js server.js index.js
