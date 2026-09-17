@@ -32,8 +32,7 @@ jobs:
           TAG="v${VERSION}-${TIMESTAMP}-${SHORT_SHA}"
           echo "TAG=${TAG}" >> $GITHUB_OUTPUT
           echo "Generated Tag: ${TAG}"
-
-      # ⭐ NEW: Stamp the tag into package.json before zipping
+          
       - name: Stamp package.json with tag
         run: |
           node -e "
